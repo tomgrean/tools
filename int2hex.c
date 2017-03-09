@@ -41,7 +41,7 @@ void convertToAny(long value, const short to)
 	}
 	if (value > 0) {
 		convertToAny(value / to, to);
-		printf("%c", digit[value % to]);
+		putchar(digit[value % to]);
 	}
 }
 int main(int argc, char *argv[])
@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
 			break;
 		default:
 			if (to < sizeof(digit)) {
+				putchar('\t');
 				convertToAny(value, to);
 			} else {
 				fprintf(stderr, "radix:%d too big.\n", to);
@@ -119,6 +120,6 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
-	printf("\n");
+	putchar('\n');
 	return 0;
 }
