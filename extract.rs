@@ -106,7 +106,7 @@ impl Idx {
         //if count != con.result.len() {
         //    return Err(DictError::My(format!("not equal! {} != {}", count, con.result.len())));
         //}
-        println!("content: {}", file_con.len());
+        println!("idxfilesize={}", file_con.len());
         Ok(Idx { content:file_con, index: con.result })
     }
     pub fn len(&self) -> usize {
@@ -218,9 +218,10 @@ impl Idx {
     }
 }
 fn main() {
-    let seperator1 = b"\0;z\n";
-    let seperator2 = b"\0;`\n";
+    let seperator1 = [1u8, 1, 3, b'\n'];
+    let seperator2 = [5u8, 5, 3, b'\n'];
     let idxfile = Idx::open(&path::PathBuf::from("new.idx")).unwrap();
+
 /*
     //idx dump
     let mut i = 0usize;
@@ -250,11 +251,12 @@ fn main() {
         let (ioff, ilen) = idxfile.get_offset_length(i).unwrap();
         let key = idxfile.get_word(i).unwrap();
         let dict = getdict(&mut dictfile, ioff, ilen).unwrap();
-        writer.write(seperator1).unwrap();
+        writer.write(&seperator1).unwrap();
         writer.write(key).unwrap();
-        writer.write(seperator2).unwrap();
+        writer.write(&seperator2).unwrap();
         writer.write(&dict).unwrap();
         i += 1;
     }
+    println!("wordcount={}", idxfile.len());
 
 }
