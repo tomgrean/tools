@@ -3,9 +3,8 @@ use std::io::Write;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::path;
 
-const SEPERATORK: [u8; 4usize] = *b"\0;z\n";
-const SEPERATORD: [u8; 4usize] = *b"\0;`\n";
-const SEPLEN: usize = 4;
+const SEPERATORK: [u8; 4usize] = [1u8, 1, 3, b'\n'];
+const SEPERATORD: [u8; 4usize] = [5u8, 5, 3, b'\n'];
 
 enum ParseState {
     PatternK(usize),
@@ -18,13 +17,14 @@ struct Parser {
     state: ParseState,
     fidx: fs::File,
     fdict: fs::File,
+    count: u32,
 }
 impl Parser {
     fn parse(&mut self, x: u8) {
         match self.state {
             ParseState::PatternK(n) => {
                 if x == SEPERATORK[n] {
-                    self.state = if n < SEPLEN - 1 {
+                    self.state = if n < SEPERATORK.len() - 1 {
                         ParseState::PatternK(n + 1)
                     } else {
                         if self.buf.len() > 0 {
@@ -46,7 +46,7 @@ impl Parser {
             }
             ParseState::PatternD(n) => {
                 if x == SEPERATORD[n] {
-                    self.state = if n < SEPLEN - 1 {
+                    self.state = if n < SEPERATORD.len() - 1 {
                         ParseState::PatternD(n + 1)
                     } else {
                         if self.buf.len() > 0 {
@@ -57,6 +57,7 @@ impl Parser {
                             let doff = self.fdict.seek(SeekFrom::Current(0)).unwrap();
                             let darr = (doff as u32).to_be_bytes();
                             self.fidx.write(&darr).unwrap();
+                            self.count += 1;
                         }
                         ParseState::Dict
                     }
@@ -97,6 +98,7 @@ pub fn open(file: &path::Path, outidx: &path::Path, outdict: &path::Path) -> io:
         state: ParseState::PatternK(0),
         fidx: fs::File::create(outidx)?,
         fdict: fs::File::create(outdict)?,
+        count: 0,
     };
     file_con.iter().for_each(|x| con.parse(*x));
     //write the tail.
@@ -109,6 +111,9 @@ pub fn open(file: &path::Path, outidx: &path::Path, outdict: &path::Path) -> io:
         //con.buf.clear();
     }
 
+    println!("StarDict's dict ifo file");
+    println!("wordcount={}", con.count);
+    println!("idxfilesize={}", con.fidx.seek(SeekFrom::Current(0)).unwrap());
     //if count != con.result.len() {
     //    return Err(DictError::My(format!("not equal! {} != {}", count, con.result.len())));
     //}
